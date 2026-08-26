@@ -1,9 +1,10 @@
 using InsuranceUnderwriting.Domain;
 using InsuranceUnderwriting.Domain.Services;
+using MediatR;
 
 namespace InsuranceUnderwriting.Application.Handlers;
 
-public class CalculatePremiumHandler
+public class CalculatePremiumHandler : IRequestHandler<CalculatePremiumCommand>
 {
     private readonly IApplicationRepository _repo;
     private readonly PremiumCalculationService _premiumService;
@@ -14,7 +15,7 @@ public class CalculatePremiumHandler
         _premiumService = premiumService;
     }
 
-    public async Task Handle(CalculatePremiumCommand cmd)
+    public async Task Handle(CalculatePremiumCommand cmd, CancellationToken cancellationToken)
     {
         var app = await _repo.GetById(cmd.ApplicationId);
         var premium = _premiumService.CalculatePremium(app.RiskLevel!, app.InsuranceType);

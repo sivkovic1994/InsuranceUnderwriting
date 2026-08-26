@@ -1,23 +1,38 @@
+using InsuranceUnderwriting.Application;
+using InsuranceUnderwriting.Domain;
+using InsuranceUnderwriting.Domain.Services;
+using InsuranceUnderwriting.Infrastructure;
+using JasperFx.Events.Projections;
+using Marten;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+builder.Services.AddMarten(options =>
+{
+    options.Connection(builder.Configuration.GetConnectionString("Postgres")
+        ?? throw new InvalidOperationException("Connection string 'Postgres' not found"));
+    options.Projections.Snapshot<InsuranceApplication>(SnapshotLifecycle.Inline);
+});
+
+builder.Services.AddScoped<IApplicationRepository, MartenApplicationRepository>();
+builder.Services.AddScoped<RiskAssessmentService>();
+builder.Services.AddScoped<PremiumCalculationService>();
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(SubmitApplicationCommand).Assembly));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
