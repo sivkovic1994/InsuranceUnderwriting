@@ -24,7 +24,7 @@ src/
 └── InsuranceUnderwriting.Api             # Controllers, DI, configuration
 
 tests/
-└── InsuranceUnderwriting.Tests           # Unit tests for domain services and the aggregate
+└── InsuranceUnderwriting.Tests           # Unit tests for domain services, the aggregate, and command handlers
 ```
 
 ## Domain flow
