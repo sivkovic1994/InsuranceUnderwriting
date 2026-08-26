@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: insurance-underwriting-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: insurance_underwriting
+    ports:
+      - "5432:5432"
+    volumes:
+      - insurance-underwriting-data:/var/lib/postgresql/data
+
+volumes:
+  insurance-underwriting-data:
