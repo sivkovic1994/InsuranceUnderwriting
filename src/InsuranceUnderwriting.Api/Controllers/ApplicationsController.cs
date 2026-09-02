@@ -1,4 +1,6 @@
 using InsuranceUnderwriting.Application;
+using InsuranceUnderwriting.Infrastructure.Projections;
+using Marten;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,11 +12,13 @@ public class ApplicationsController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly IApplicationRepository _repo;
+    private readonly IQuerySession _query;
 
-    public ApplicationsController(IMediator mediator, IApplicationRepository repo)
+    public ApplicationsController(IMediator mediator, IApplicationRepository repo, IQuerySession query)
     {
         _mediator = mediator;
         _repo = repo;
+        _query = query;
     }
 
     [HttpPost]
@@ -50,5 +54,12 @@ public class ApplicationsController : ControllerBase
     {
         var app = await _repo.GetById(id);
         return Ok(app);
+    }
+
+    [HttpGet("{id}/history")]
+    public async Task<IActionResult> GetHistory(Guid id)
+    {
+        var history = await _query.LoadAsync<ApplicationHistoryView>(id);
+        return history is null ? NotFound() : Ok(history);
     }
 }

@@ -2,6 +2,7 @@ using InsuranceUnderwriting.Application;
 using InsuranceUnderwriting.Domain;
 using InsuranceUnderwriting.Domain.Services;
 using InsuranceUnderwriting.Infrastructure;
+using InsuranceUnderwriting.Infrastructure.Projections;
 using JasperFx.Events.Projections;
 using Marten;
 
@@ -16,6 +17,7 @@ builder.Services.AddMarten(options =>
     options.Connection(builder.Configuration.GetConnectionString("Postgres")
         ?? throw new InvalidOperationException("Connection string 'Postgres' not found"));
     options.Projections.Snapshot<InsuranceApplication>(SnapshotLifecycle.Inline);
+    options.Projections.Add<ApplicationHistoryProjection>(ProjectionLifecycle.Inline);
 });
 
 builder.Services.AddScoped<IApplicationRepository, MartenApplicationRepository>();
