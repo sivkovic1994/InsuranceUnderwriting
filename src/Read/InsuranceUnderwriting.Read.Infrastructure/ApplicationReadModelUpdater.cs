@@ -61,7 +61,7 @@ public class ApplicationReadModelUpdater
             _session.Store(model);
         }
 
-        await AppendHistory(e.ApplicationId, $"Rizik procenjen: {e.RiskLevel} (score {e.RiskScore})");
+        await AddHistoryEntry(e.ApplicationId, $"Rizik procenjen: {e.RiskLevel} (score {e.RiskScore})");
     }
 
     private async Task Apply(PremiumCalculatedIntegrationEvent e)
@@ -74,7 +74,7 @@ public class ApplicationReadModelUpdater
             _session.Store(model);
         }
 
-        await AppendHistory(e.ApplicationId, $"Premija izračunata: {e.Premium}");
+        await AddHistoryEntry(e.ApplicationId, $"Premija izračunata: {e.Premium}");
     }
 
     private async Task Apply(PolicyApprovedIntegrationEvent e)
@@ -86,10 +86,10 @@ public class ApplicationReadModelUpdater
             _session.Store(model);
         }
 
-        await AppendHistory(e.ApplicationId, $"Polisa odobrena {e.ApprovedAt:u}");
+        await AddHistoryEntry(e.ApplicationId, $"Polisa odobrena {e.ApprovedAt:u}");
     }
 
-    private async Task AppendHistory(Guid applicationId, string entry)
+    private async Task AddHistoryEntry(Guid applicationId, string entry)
     {
         var history = await _session.LoadAsync<ApplicationHistoryView>(applicationId);
         if (history is not null)
