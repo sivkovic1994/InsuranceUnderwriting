@@ -1,15 +1,74 @@
 services:
-  postgres:
+  write-postgres:
     image: postgres:16
-    container_name: insurance-underwriting-postgres
+    container_name: insurance-write-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: insurance_underwriting
+      POSTGRES_DB: insurance_write
     ports:
       - "5432:5432"
     volumes:
-      - insurance-underwriting-data:/var/lib/postgresql/data
+      - insurance-write-data:/var/lib/postgresql/data
+
+  read-postgres:
+    image: postgres:16
+    container_name: insurance-read-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: insurance_read
+    ports:
+      - "5433:5432"
+    volumes:
+      - insurance-read-data:/var/lib/postgresql/data
+
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: insurance-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:19092,CONTROLLER://0.0.0.0:19093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:19092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:19093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  write-api:
+    build:
+      context: .
+      dockerfile: src/Write/InsuranceUnderwriting.Write.Api/Dockerfile
+    container_name: insurance-write-api
+    ports:
+      - "8081:8080"
+    environment:
+      ConnectionStrings__Postgres: "Host=write-postgres;Port=5432;Database=insurance_write;Username=postgres;Password=postgres"
+      Kafka__BootstrapServers: "kafka:19092"
+    depends_on:
+      - write-postgres
+      - kafka
+
+  read-api:
+    build:
+      context: .
+      dockerfile: src/Read/InsuranceUnderwriting.Read.Api/Dockerfile
+    container_name: insurance-read-api
+    ports:
+      - "8082:8080"
+    environment:
+      ConnectionStrings__Postgres: "Host=read-postgres;Port=5432;Database=insurance_read;Username=postgres;Password=postgres"
+      Kafka__BootstrapServers: "kafka:19092"
+      Kafka__ConsumerGroup: "insurance-read-service"
+    depends_on:
+      - read-postgres
+      - kafka
 
 volumes:
-  insurance-underwriting-data:
+  insurance-write-data:
+  insurance-read-data:
