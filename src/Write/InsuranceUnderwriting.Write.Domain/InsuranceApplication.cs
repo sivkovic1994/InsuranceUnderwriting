@@ -12,7 +12,7 @@ public class InsuranceApplication
     public static (InsuranceApplication, ApplicationSubmitted) Submit(string clientName, string insuranceType)
     {
         if (string.IsNullOrEmpty(clientName))
-            throw new ArgumentException("Ime klijenta je obavezno");
+            throw new ArgumentException("Client name is required");
 
         var id = Guid.NewGuid();
         var @event = new ApplicationSubmitted(id, clientName, insuranceType);

@@ -46,7 +46,7 @@ public class ApplicationReadModelUpdater : IReadModelProjector
         {
             Id = e.ApplicationId,
             ClientName = e.ClientName,
-            History = [$"Prijava podneta ({e.InsuranceType})"]
+            History = [$"Application submitted ({e.InsuranceType})"]
         });
         await _session.SaveChangesAsync();
     }
@@ -61,7 +61,7 @@ public class ApplicationReadModelUpdater : IReadModelProjector
             _session.Store(model);
         }
 
-        await AddHistoryEntry(e.ApplicationId, $"Rizik procenjen: {e.RiskLevel} (score {e.RiskScore})");
+        await AddHistoryEntry(e.ApplicationId, $"Risk assessed: {e.RiskLevel} (score {e.RiskScore})");
     }
 
     private async Task Apply(PremiumCalculatedIntegrationEvent e)
@@ -74,7 +74,7 @@ public class ApplicationReadModelUpdater : IReadModelProjector
             _session.Store(model);
         }
 
-        await AddHistoryEntry(e.ApplicationId, $"Premija izračunata: {e.Premium}");
+        await AddHistoryEntry(e.ApplicationId, $"Premium calculated: {e.Premium}");
     }
 
     private async Task Apply(PolicyApprovedIntegrationEvent e)
@@ -86,7 +86,7 @@ public class ApplicationReadModelUpdater : IReadModelProjector
             _session.Store(model);
         }
 
-        await AddHistoryEntry(e.ApplicationId, $"Polisa odobrena {e.ApprovedAt:u}");
+        await AddHistoryEntry(e.ApplicationId, $"Policy approved {e.ApprovedAt:u}");
     }
 
     private async Task AddHistoryEntry(Guid applicationId, string entry)

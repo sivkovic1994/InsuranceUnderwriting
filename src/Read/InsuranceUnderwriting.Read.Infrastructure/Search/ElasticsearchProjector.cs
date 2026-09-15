@@ -43,7 +43,7 @@ public class ElasticsearchProjector : IReadModelProjector
             ClientName = e.ClientName,
             InsuranceType = e.InsuranceType,
             Status = "Submitted",
-            History = [$"Prijava podneta ({e.InsuranceType})"]
+            History = [$"Application submitted ({e.InsuranceType})"]
         };
         await Index(doc);
     }
@@ -56,7 +56,7 @@ public class ElasticsearchProjector : IReadModelProjector
 
         doc.RiskLevel = e.RiskLevel;
         doc.Status = "RiskAssessed";
-        doc.History.Add($"Rizik procenjen: {e.RiskLevel} (score {e.RiskScore})");
+        doc.History.Add($"Risk assessed: {e.RiskLevel} (score {e.RiskScore})");
         await Index(doc);
     }
 
@@ -68,7 +68,7 @@ public class ElasticsearchProjector : IReadModelProjector
 
         doc.Premium = e.Premium;
         doc.Status = "PremiumCalculated";
-        doc.History.Add($"Premija izračunata: {e.Premium}");
+        doc.History.Add($"Premium calculated: {e.Premium}");
         await Index(doc);
     }
 
@@ -79,7 +79,7 @@ public class ElasticsearchProjector : IReadModelProjector
             return;
 
         doc.Status = "Approved";
-        doc.History.Add($"Polisa odobrena {e.ApprovedAt:u}");
+        doc.History.Add($"Policy approved {e.ApprovedAt:u}");
         await Index(doc);
     }
 
