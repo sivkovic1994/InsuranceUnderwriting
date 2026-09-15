@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Marten" Version="9.29.0" />
+    <PackageReference Include="Elastic.Clients.Elasticsearch" Version="8.15.10" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.10" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
   </ItemGroup>

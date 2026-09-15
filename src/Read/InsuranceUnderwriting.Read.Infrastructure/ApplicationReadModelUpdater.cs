@@ -7,7 +7,7 @@ namespace InsuranceUnderwriting.Read.Infrastructure;
 // The "projection" for the Read service: applies integration events consumed
 // from Kafka onto the denormalized documents, upserting them via Marten used
 // purely as a document store (no event sourcing on this side).
-public class ApplicationReadModelUpdater
+public class ApplicationReadModelUpdater : IReadModelProjector
 {
     private readonly IDocumentSession _session;
     public ApplicationReadModelUpdater(IDocumentSession session) => _session = session;

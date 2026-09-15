@@ -40,6 +40,18 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    container_name: insurance-elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - insurance-elasticsearch-data:/usr/share/elasticsearch/data
+
   write-api:
     build:
       context: .
@@ -65,10 +77,13 @@ services:
       ConnectionStrings__Postgres: "Host=read-postgres;Port=5432;Database=insurance_read;Username=postgres;Password=postgres"
       Kafka__BootstrapServers: "kafka:19092"
       Kafka__ConsumerGroup: "insurance-read-service"
+      Elasticsearch__Uri: "http://elasticsearch:9200"
     depends_on:
       - read-postgres
       - kafka
+      - elasticsearch
 
 volumes:
   insurance-write-data:
   insurance-read-data:
+  insurance-elasticsearch-data:

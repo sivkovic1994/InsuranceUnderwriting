@@ -10,6 +10,7 @@ and policy issuance).
 - [Marten](https://martendb.io/) — event store (write side) and document store (read side) on PostgreSQL
 - PostgreSQL 16 — one database per service
 - Apache Kafka — asynchronous integration events between the two services
+- Elasticsearch — full-text search index, fed by the same integration events as the Marten read model
 - MediatR — command dispatch to handlers (write side)
 - xUnit — unit tests
 
@@ -30,8 +31,8 @@ src/
 │   └── InsuranceUnderwriting.Write.Api            # Command controller (POST only), DI, configuration
 │
 └── Read/                                          # Query side — owns a denormalized read model
-    ├── InsuranceUnderwriting.Read.Domain          # Denormalized view models
-    ├── InsuranceUnderwriting.Read.Infrastructure  # Marten document store + Kafka consumer that updates it
+    ├── InsuranceUnderwriting.Read.Domain          # Denormalized view/search models
+    ├── InsuranceUnderwriting.Read.Infrastructure  # Marten document store + Elasticsearch index + Kafka consumer that updates both
     └── InsuranceUnderwriting.Read.Api             # Query controller (GET only), DI, configuration
 
 tests/
@@ -48,11 +49,19 @@ event** and publishes it to the `insurance.application-events` Kafka topic (keye
 
 ### Read service (denormalized)
 
-A background Kafka consumer subscribes to `insurance.application-events`, and applies
-each integration event to two denormalized Marten documents — `ApplicationReadModel`
-(current state) and `ApplicationHistoryView` (audit trail). Marten here is used purely
-as a document store; there is no event sourcing on this side. Queries only ever read
-these documents, never the write service's event store.
+A background Kafka consumer subscribes to `insurance.application-events` and runs every
+registered `IReadModelProjector` over each event, so a single message keeps two
+independent stores in sync:
+
+- **Marten** (`ApplicationReadModelUpdater`) — two documents, `ApplicationReadModel`
+  (current state) and `ApplicationHistoryView` (audit trail), optimized for lookup by id.
+  Marten here is used purely as a document store; there is no event sourcing on this side.
+- **Elasticsearch** (`ElasticsearchProjector`) — one `ApplicationSearchDocument` per
+  application in the `applications` index, optimized for full-text search across client
+  name, insurance type and history entries — the kind of query a document-by-id store
+  isn't built for.
+
+Queries only ever read these two stores, never the write service's event store.
 
 ## Domain flow
 
@@ -74,8 +83,9 @@ dotnet run --project src/Read/InsuranceUnderwriting.Read.Api
 ```
 
 `docker compose up -d` starts both PostgreSQL databases (`insurance_write`,
-`insurance_read`) and a single-node Kafka broker. Swagger UI is available at `/swagger`
-on each service in the development environment.
+`insurance_read`), a single-node Kafka broker, and a single-node Elasticsearch instance
+(security disabled — local/demo only). Swagger UI is available at `/swagger` on each
+service in the development environment.
 
 ## API endpoints
 
@@ -94,6 +104,7 @@ on each service in the development environment.
 |--------|----------------------------------------------|---------------------------------|
 | GET    | `/api/applications/{id}`                     | Get current (denormalized) state |
 | GET    | `/api/applications/{id}/history`             | Get the application's event history |
+| GET    | `/api/applications/search?q={term}`          | Full-text search (client name, insurance type, history) via Elasticsearch |
 
 ## Tests
 

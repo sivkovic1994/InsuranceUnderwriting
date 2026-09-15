@@ -1,15 +1,15 @@
 using System.Text.Json;
 using Confluent.Kafka;
 using InsuranceUnderwriting.Contracts;
-using Marten;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace InsuranceUnderwriting.Read.Infrastructure.Kafka;
 
-// Consumes integration events published by the Write service and feeds them
-// into ApplicationReadModelUpdater to keep the denormalized read model current.
+// Consumes integration events published by the Write service and runs every
+// registered IReadModelProjector over them, keeping each denormalized store
+// (Marten documents, Elasticsearch index) current.
 public class KafkaConsumerHostedService : BackgroundService
 {
     private readonly string _bootstrapServers;
@@ -71,9 +71,9 @@ public class KafkaConsumerHostedService : BackgroundService
                         ?? throw new InvalidOperationException("Empty integration event message");
 
                     await using var scope = _scopeFactory.CreateAsyncScope();
-                    var session = scope.ServiceProvider.GetRequiredService<IDocumentSession>();
-                    var updater = new ApplicationReadModelUpdater(session);
-                    await updater.ApplyAsync(envelope.EventType, envelope.Payload);
+                    var projectors = scope.ServiceProvider.GetServices<IReadModelProjector>();
+                    foreach (var projector in projectors)
+                        await projector.ApplyAsync(envelope.EventType, envelope.Payload);
 
                     consumer.Commit(result);
                 }
